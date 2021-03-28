@@ -45,7 +45,6 @@ const readAllCats = (req, res, callback) => {
   Cat.find(callback).lean();
 };
 
-
 // function to find a specific cat on request.
 // Express functions always receive the request and the response.
 const readCat = (req, res) => {
@@ -105,12 +104,12 @@ const hostPage2 = (req, res) => {
 // controller functions in Express receive the full HTTP request
 // and a pre-filled out response object to send
 const hostPage3 = (req, res) => {
-    // res.render takes a name of a page to render.
-    // These must be in the folder you specified as views in your main app.js file
-    // Additionally, you don't need .jade because you registered the file type
-    // in the app.js as jade. Calling res.render('index')
-    // actually calls index.jade. A second parameter of JSON can be passed
-    // into the jade to be used as variables with #{varName}
+  // res.render takes a name of a page to render.
+  // These must be in the folder you specified as views in your main app.js file
+  // Additionally, you don't need .jade because you registered the file type
+  // in the app.js as jade. Calling res.render('index')
+  // actually calls index.jade. A second parameter of JSON can be passed
+  // into the jade to be used as variables with #{varName}
   res.render('page3');
 };
 
@@ -167,7 +166,6 @@ const setName = (req, res) => {
 
   return res;
 };
-
 
 // function to handle requests search for a name and return the object
 // controller functions in Express receive the full HTTP request
@@ -249,16 +247,84 @@ const notFound = (req, res) => {
   });
 };
 
+const Dog = models.Dog.DogModel;
+
+const getAllDogs = (req, res, cb) => {
+  Dog.find(cb).lean();
+};
+
+const addDog = (req, res) => {
+  const { name, breed, age } = req.body;
+
+  if (!name || !breed || !age) {
+    return res.status(400).json({ message: 'Bad request: missing name, breed, or age' });
+  }
+
+  const newDog = new Dog(req.body);
+
+  return newDog.save()
+    .then((result) => {
+      res.json(result);
+    })
+    .catch((err) => {
+      res.status(500).json(err);
+    });
+};
+
+const incrementAge = (req, res) => {
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ message: 'Bad request: missing name' });
+  }
+
+  return Dog.findByName(name, (err, doc) => {
+    if (err) {
+      return res.status(500).json(err);
+    }
+
+    if (!doc) {
+      return res.json({ message: `No dog named ${name} found` });
+    }
+
+    const dog = doc;
+
+    // increment the age and save it in
+    dog.age++;
+
+    return dog.save()
+      .then((result) => {
+        res.json(result);
+      })
+      .catch((error) => {
+        res.status(500).json(error);
+      });
+  });
+};
+
+const hostPage4 = (req, res) => {
+  getAllDogs(req, res, (err, docs) => {
+    if (err) {
+      return res.status(500).json(err);
+    }
+
+    return res.render('page4', { dogs: docs });
+  });
+};
+
 // export the relevant public controller functions
 module.exports = {
   index: hostIndex,
   page1: hostPage1,
   page2: hostPage2,
   page3: hostPage3,
+  page4: hostPage4,
   readCat,
   getName,
   setName,
   updateLast,
   searchName,
   notFound,
+  addDog,
+  incrementAge,
 };
